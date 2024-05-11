@@ -1,7 +1,7 @@
 from twelvedata import TDClient
 import pandas as pd
 from datetime import datetime, timedelta
-import parser
+from dateutil import parser
 import time
 import os
 from dotenv import load_dotenv
