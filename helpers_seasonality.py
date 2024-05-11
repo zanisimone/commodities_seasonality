@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def concat_data(td, start_date, end_date, output_size, ticker, interval):
+def concat_data(td, end_date, output_size, ticker, interval):
 
     data_to_load_tmp = output_size
     tmp_data = end_date
@@ -45,7 +45,8 @@ def concat_data(td, start_date, end_date, output_size, ticker, interval):
             ).as_pandas()
             parts.append(ts)
             flag = 1
-
+    
+    # if the df has multiple parts it returns it else it returns only the simple df
     if(concat == 1):
         print(concat)
         print(parts)
@@ -54,21 +55,24 @@ def concat_data(td, start_date, end_date, output_size, ticker, interval):
         return parts[0]
     
 
-def download_td_test(start_date, end_date, ticker):
+def download_td(start_date, end_date, ticker):
     # Initialize client
     API_KEY = os.getenv("TD_API_KEY")
     td = TDClient(apikey = API_KEY)
 
-    #outputsize 
+    #time format for strptime function
+    date_format = "%Y-%m-%d"
+
+    #outputsize, timedelta between end_date and start_date
     output_size = (parser.parse(end_date) - parser.parse(start_date)).days
     print(output_size)
 
     # Construct the necessary time series and Returns pandas.DataFrame
     data = concat_data(td, start_date, end_date, output_size, ticker, '1day')
-
-    date_format = "%Y-%m-%d"
+    
     tmp = datetime.strptime(start_date, date_format)
 
+    #slicing dataframe> if the final is an holiday day, it add a day until it find it as a tarding day
     while True:
         try:
             return data.iloc[:data.index.get_loc(tmp)]
