@@ -5,7 +5,7 @@ from typing import Optional
 from helpers_seasonality import *
 
 
-df = download_td_test('2000-01-01', '2010-12-31', 'aapl')
+df = download_td_test('1990-01-01', '2010-12-31', 'aapl')
 print(df)
 
 '''
