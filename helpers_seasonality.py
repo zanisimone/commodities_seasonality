@@ -1,30 +1,79 @@
 from twelvedata import TDClient
 import pandas as pd
-from datetime import datetime
+from datetime import datetime 
 import time
+from dateutil import parser
 import os
 from dotenv import load_dotenv
+import holidays
 
 load_dotenv()
 
-def download_td_test(start_date, end_date):
+def concat_data(td, start_date, end_date, output_size, ticker, interval):
+
+    data_to_load_tmp = output_size
+    tmp_data = end_date
+    parts = []
+    concat = 0
+
+    for i in range(0, (output_size // 5000)+1):
+        if (data_to_load_tmp >= 5000):
+            print('downloading with concatenation')
+            ts = td.time_series(
+                symbol=ticker,
+                interval=interval,
+                outputsize=5000,
+                end_date = tmp_data,
+                timezone="America/New_York",
+            ).as_pandas()
+            data_to_load_tmp -= 5000
+            parts.append(ts)
+            tmp_data = parts[i-1].index.tolist()[-1] - datetime.timedelta(days=1)
+            concat = 1
+        if (data_to_load_tmp < 5000):
+            print('downloading without concatenation')
+            ts = td.time_series(
+                symbol=ticker,
+                interval=interval,
+                outputsize=data_to_load_tmp,
+                end_date = tmp_data,
+                timezone="America/New_York",
+            ).as_pandas()
+            parts.append(ts)
+
+    print('before return print parts')
+
+    if(concat == 1):
+        print(concat)
+        return pd.concat(parts)
+    else:
+        print(concat)
+        print(parts[0])
+        return parts[0]
+    
+def check_holidays(date):
+    us_holidays = holidays.US()
+    return date in us_holidays
+
+def download_td_test(start_date, end_date, ticker):
     # Initialize client
     API_KEY = os.getenv("TD_API_KEY")
     td = TDClient(apikey = API_KEY)
 
-    # Construct the necessary time series
-    ts = td.time_series(
-        symbol="AAPL",
-        interval="1day",
-        outputsize=2000,
-        timezone="America/New_York",
-        start_date = start_date,
-        end_date = end_date
-    )
+    #outputsize 
+    output_size = (parser.parse(end_date) - parser.parse(start_date)).days
+    print(output_size)
 
-    # Returns pandas.DataFrame
-    data = ts.as_pandas()
-    return data
+    # Construct the necessary time series and Returns pandas.DataFrame
+    data = concat_data(td, start_date, end_date, output_size, ticker, '1day')
+
+    tmp = start_date
+
+    while True:
+        if (check_holidays(tmp)):
+            tmp = tmp + datetime.timedelta(days=1)
+        else:
+            return data.loc[tmp]
 
 def manage_seasonality(input_dataframe, excluded_years = []):
     min_years_local = 1

@@ -4,6 +4,11 @@ from typing import Optional
 
 from helpers_seasonality import *
 
+
+df = download_td_test('2000-01-01', '2010-12-31', 'aapl')
+print(df)
+
+'''
 app = FastAPI()
 
 @app.get('/')
@@ -23,6 +28,7 @@ async def get_seasonality(startend: int):
     df = download_td_test(start_date = start, end_date = end)
 
     return (list(df.index))
+'''
 
 
 
